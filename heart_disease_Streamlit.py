@@ -34,7 +34,7 @@ def load_and_prepare():
     # Read datasets (expect files under heart_disease/ folder)
     df_cleveland = pd.read_csv("heart_disease/cleveland.data", sep=",")
     df_long_beach = pd.read_csv("heart_disease/long_beach.data", sep=",")
-    df_hungarian = pd.read_csv("heart_disease/hungarian.data", delim_whitespace=True)
+    df_hungarian = pd.read_csv("heart_disease/hungarian.data", sep="\s+")
     df_switzerland = pd.read_csv("heart_disease/switzerland.data", sep=",")
 
     # The original notebook assumes column names consistent with UCI Heart Disease dataset
@@ -48,16 +48,16 @@ def load_and_prepare():
 
     # Replace missing value markers used in the notebook
     df_cleveland.replace("?", np.nan, inplace=True)
-    df_cleveland["ca"].replace(9.0, np.nan, inplace=True)
+    df_cleveland["ca"] = df_cleveland["ca"].replace(9.0, np.nan)
 
     df_long_beach.replace("?", np.nan, inplace=True)
-    df_long_beach["ca"].replace(9.0, np.nan, inplace=True)
+    df_long_beach["ca"] = df_long_beach["ca"].replace(9.0, np.nan)
 
     df_hungarian.replace(-9.0, np.nan, inplace=True)
-    df_hungarian["ca"].replace(9.0, np.nan, inplace=True)
+    df_hungarian["ca"] = df_hungarian["ca"].replace(9.0, np.nan)
 
     df_switzerland.replace("?", np.nan, inplace=True)
-    df_switzerland["ca"].replace(9.0, np.nan, inplace=True)
+    df_switzerland["ca"] = df_switzerland["ca"].replace(9.0, np.nan)
 
     # Add location column
     df_cleveland["location"] = "Cleveland"
