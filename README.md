@@ -1,4 +1,5 @@
 # Heart Disease Analysis
+**Aryan Sharma**
 
 This repository contains an exploratory data analysis (EDA) project for heart disease using datasets found from the UCI Machine Learning Repository. The goal is to combine four location-specific datasets (Cleveland, Long Beach, Hungarian, Switzerland), clean and impute missing values (MICE for continuous variables and KNN for categorical variables), and provide visualizations along with interactive exploration via a Streamlit app. With the centralized dataset, the hope is to better understand the different stages of heart disease and how various factors contribute to its progression.
 
