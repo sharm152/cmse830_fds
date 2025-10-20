@@ -32,10 +32,10 @@ def calc_nan_stats(data):
 @st.cache_data
 def load_and_prepare():
     # Read datasets (expect files under heart_disease/ folder)
-    df_cleveland = pd.read_csv("heart_disease/cleveland.data", sep=",")
-    df_long_beach = pd.read_csv("heart_disease/long_beach.data", sep=",")
-    df_hungarian = pd.read_csv("heart_disease/hungarian.data", sep="\s+")
-    df_switzerland = pd.read_csv("heart_disease/switzerland.data", sep=",")
+    df_cleveland = pd.read_csv("heart_disease/cleveland.data", sep=',')
+    df_long_beach = pd.read_csv("heart_disease/long_beach.data", sep=',')
+    df_hungarian = pd.read_csv("heart_disease/hungarian.data", sep='\s+')
+    df_switzerland = pd.read_csv("heart_disease/switzerland.data", sep=',')
 
     # The original notebook assumes column names consistent with UCI Heart Disease dataset
     col_names = [
