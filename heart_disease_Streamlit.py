@@ -284,12 +284,12 @@ if page == "Data Background":
     with tab1:
         st.subheader("Introduction")
         st.markdown("""
-        The goal of this project is to examine heart disease using four location-specific datasets
-        (Cleveland, Long Beach, Hungarian, and Switzerland) found in the UCI Machine Learning Repository. By moving
-        through the pages on your left, you will see the chronological order of loading in the datasets, curating a
-        centralized dataset, removing duplicates, label encoding, handling missing values, imputation analyses, and
-        generating visualizations. With the combined and cleaned dataset, we hope to improve our understanding of
-        the different stages of heart disease and how various factors contribute to its progression.
+        This repository contains an exploratory data analysis (EDA) project for heart disease using datasets found from
+        the UCI Machine Learning Repository. The goal is to combine four location-specific datasets (Cleveland, Long
+        Beach, Hungarian, Switzerland), clean and impute missing values (MICE for continuous variables and KNN for
+        categorical variables), and provide visualizations along with interactive exploration via a Streamlit app. With
+        the centralized dataset, the hope is to better understand the different stages of heart disease and how various
+        factors contribute to its progression.
         
         **To analyze the Heart Disease Stages, our target variable will be `num` (described in-depth below).**
                     

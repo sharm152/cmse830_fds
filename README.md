@@ -1,6 +1,6 @@
-# Heart Disease Analysis (CMSE 830 Project)
+# Heart Disease Analysis
 
-This repository contains an exploratory data analysis (EDA) project for the UCI Heart Disease datasets. The goal is to combine four location-specific datasets (Cleveland, Long Beach, Hungarian, Switzerland), clean and impute missing values (MICE for continuous variables and KNN for categorical variables), and provide visualizations and interactive exploration via a Streamlit app.
+This repository contains an exploratory data analysis (EDA) project for heart disease using datasets found from the UCI Machine Learning Repository. The goal is to combine four location-specific datasets (Cleveland, Long Beach, Hungarian, Switzerland), clean and impute missing values (MICE for continuous variables and KNN for categorical variables), and provide visualizations along with interactive exploration via a Streamlit app. With the centralized dataset, the hope is to better understand the different stages of heart disease and how various factors contribute to its progression.
 
 ## Project Overview
 
@@ -17,7 +17,7 @@ This project performs the following main steps:
 
 - `heart_disease_Notebook.ipynb` — Jupyter notebook that walks through the full analysis, including data loading, cleaning, imputation, and visualizations; including their respective outputs along with the associated code.
 - `heart_disease_Streamlit.py` — Streamlit application that reproduces key parts of the notebook in an interactive dashboard (filters in the sidebar, tabs for preprocessing, missingness, imputation analysis, and visualizations).
-- `heart_disease_Datasets/` — expected location for the raw UCI dataset files: `cleveland.data`, `long_beach.data`, `hungarian.data`, `switzerland.data`.
+- `heart_disease_Datasets` — Location for the raw UCI dataset files: `cleveland.data`, `long_beach.data`, `hungarian.data`, `switzerland.data`.
 - `requirements.txt` — Python package dependencies used by the project.
 
 ## Setup Instructions
@@ -35,7 +35,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Place the UCI dataset files under `heart_disease_Datasets/` with the expected filenames:
+3. Ensure the UCI dataset files are under `heart_disease_Datasets/` with the following filenames:
 
 - `cleveland.data`
 - `long_beach.data`
@@ -47,13 +47,6 @@ pip install -r requirements.txt
 ```bash
 streamlit run heart_disease_Streamlit.py
 ```
-
-The app will open in your default browser and provide interactive filters and visualizations.
-
-## Notes and interpretation guidance
-
-- Imputation increases the amount of usable data but may alter distributional properties (e.g., reduce apparent variance, shift medians, and strengthen correlations). Interpret post-imputation results with caution and, where possible, validate using sensitivity analyses.
-- The notebook and Streamlit app use identical preprocessing/imputation logic; Streamlit caches results for responsiveness.
 
 ## Development
 
