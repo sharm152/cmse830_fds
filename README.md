@@ -13,7 +13,7 @@ This project performs the following main steps:
 5. Impute categorical variables (`fbs`, `restecg`, `exang`, `slope`, `ca`, `thal`) using KNNImputer with StandardScaler.
 6. Reassign appropriate dtypes and generate exploratory visualizations (correlation heatmaps, box plots, bar chart, scatter plot, and violin plot).
 
-## Contents
+## Repository Contents
 
 - `heart_disease_Notebook.ipynb` — Jupyter notebook that walks through the full analysis, including data loading, cleaning, imputation, and visualizations; including their respective outputs along with the associated code.
 - `heart_disease_Streamlit.py` — Streamlit application that reproduces key parts of the notebook in an interactive dashboard (filters in the sidebar, tabs for preprocessing, missingness, imputation analysis, and visualizations).
