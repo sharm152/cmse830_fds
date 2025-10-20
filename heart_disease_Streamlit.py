@@ -322,11 +322,12 @@ elif page == "Initial Preprocessing Steps":
     tab1, tab2, tab3 = st.tabs(["Dataset Statistics", "Check Duplicates", "Location Encoding"])
 
     with tab1:
-        st.write("Dataset Statistics")
         col1, col2 = st.columns(2)
         with col1:
+            st.subheader("Initial Data Types")
             st.code(artifacts['combine_init_info'].getvalue(), language="text")
         with col2:
+            st.subheader("Updated Data Types")
             st.code(artifacts['combine_new_info'].getvalue(), language="text")
         st.dataframe(artifacts['combine_new_describe'], height=318)
 
