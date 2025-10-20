@@ -32,10 +32,10 @@ def calc_nan_stats(data):
 @st.cache_data
 def load_and_prepare():
     # Read datasets (expect files under heart_disease/ folder)
-    df_cleveland = pd.read_csv("heart_disease/cleveland.data", sep=',')
-    df_long_beach = pd.read_csv("heart_disease/long_beach.data", sep=',')
-    df_hungarian = pd.read_csv("heart_disease/hungarian.data", sep='\s+')
-    df_switzerland = pd.read_csv("heart_disease/switzerland.data", sep=',')
+    df_cleveland = pd.read_csv("heart_disease_Datasets/cleveland.data", sep=',')
+    df_long_beach = pd.read_csv("heart_disease_Datasets/long_beach.data", sep=',')
+    df_hungarian = pd.read_csv("heart_disease_Datasets/hungarian.data", sep='\s+')
+    df_switzerland = pd.read_csv("heart_disease_Datasets/switzerland.data", sep=',')
 
     # The original notebook assumes column names consistent with UCI Heart Disease dataset
     col_names = [
@@ -185,8 +185,8 @@ def load_and_prepare():
 artifacts = load_and_prepare()
 
 
-# --- Minimal addition: age-range slider to filter datasets by age ---
-# Determine age bounds from the combined/no-dup dataset (ignore NaNs)
+# --- Slider to filter datasets by age ---
+# Determine age bounds from the combined/no-dup dataset
 try:
     _age_min = int(np.nanmin(artifacts['df_combine']['age']))
     _age_max = int(np.nanmax(artifacts['df_combine']['age']))
@@ -214,13 +214,13 @@ if isinstance(artifacts, dict):
 # End of minimal age slider addition
 
 
-# --- Minimal addition: allow selecting (or de-selecting) locations to include ---
+# --- Allow selecting (or de-selecting) locations to include ---
 try:
     _loc_options = list(artifacts['df_combine']['location'].dropna().unique())
 except Exception:
     _loc_options = []
 
-selected_locations = st.sidebar.multiselect("Select (or Unselect) Locations to Include", options=_loc_options, 
+selected_locations = st.sidebar.multiselect("Select (or Deselect) Locations to Include", options=_loc_options, 
                                             default=_loc_options)
 
 # If user cleared selection, treat as 'all selected' to avoid empty displays
@@ -264,7 +264,10 @@ if isinstance(artifacts, dict):
 # End of location-selection addition
 
 
-# Sidebar pages as requested
+# st_sidebar_info("This is a text box in the main page — it displays content and messages (not interactive controls). Compare it with the sidebar on the left, which holds filters and navigation.)")
+# st_sidebar_markdown("This text has a :grey-background[grey background].")
+
+
 page = st.sidebar.radio("Select Page", [
     "Data Background",
     "Initial Preprocessing Steps",
@@ -276,31 +279,70 @@ page = st.sidebar.radio("Select Page", [
 if page == "Data Background":
     st.header("Data Background")
 
-    tab1, tab2, tab3 = st.tabs(["Introduction", "Individual Datasets", "Combined Dataset"])
+    tab1, tab2, tab3 = st.tabs(["Introduction & Variables", "Individual Datasets", "Combined Dataset"])
 
     with tab1:
+        st.subheader("Introduction")
+        st.markdown("""
+        The goal of this project is to examine heart disease using four location-specific datasets
+        (Cleveland, Long Beach, Hungarian, and Switzerland) found in the UCI Machine Learning Repository. By moving
+        through the pages on your left, you will see the chronological order of loading in the datasets, curating a
+        centralized dataset, removing duplicates, label encoding, handling missing values, imputation analyses, and
+        generating visualizations. With the combined and cleaned dataset, we hope to improve our understanding of
+        the different stages of heart disease and how various factors contribute to its progression.
+        
+        **To analyze the Heart Disease Stages, our target variable will be `num` (described in-depth below).**
+                    
+        Notes Regarding Interactivity:
+        - You may filter the dataset by `age` using the slider on the left sidebar.
+        - You may select (or deselect) the dataset by `location` using the multiselect on the left sidebar.
+        """)
+
         st.subheader("Variables")
         col1, col2 = st.columns(2)
-
         with col1:
             st.markdown("""
             0. `age` (Ratio): Age in years
-            1. `sex` (Nominal): 1: male, 0: female
-            2. `cp` (Nominal): Chest pain type (1-4)
-            3. `trestbps` (Ratio): Resting blood pressure
-            4. `chol` (Ratio): Serum cholesterol
+            1. `sex` (Nominal):
+                - 0: female
+                - 1: male
+            2. `cp` (Nominal): Chest pain type
+                - 1: typical angina
+                - 2: atypical angina
+                - 3: non-anginal pain
+                - 4: asymptomatic
+            3. `trestbps` (Ratio): Resting blood pressure (in mm Hg on admission to the hospital)
+            4. `chol` (Ratio): Serum cholestoral in mg/dl
             5. `fbs` (Nominal): Fasting blood sugar > 120 mg/dl
-            6. `restecg` (Nominal): Resting ECG results (0-2)
+                - 0: false
+                - 1: true
+            6. `restecg` (Nominal): Resting electrocardiographic results
+                - 0: normal
+                - 1: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)
+                - 2: showing probable or definite left ventricular hypertrophy by Estes' criteria
             """)
         with col2:
             st.markdown("""
             7. `thalach` (Ratio): Maximum heart rate achieved
-            8. `exang` (Nominal): Exercise induced angina (1/0)
+            8. `exang` (Nominal): Exercise induced angina
+                - 0: no
+                - 1: yes
             9. `oldpeak` (Ratio): ST depression induced by exercise relative to rest
-            10. `slope` (Ordinal): Slope of the peak exercise ST segment (1-3)
+            10. `slope` (Ordinal): Slope of the peak exercise ST segment
+                - 1: upsloping
+                - 2: flat
+                - 3: downsloping
             11. `ca` (Ratio): Number of major vessels (0-3) colored by fluoroscopy
-            12. `thal` (Nominal): Thallium stress test result (3,6,7)
-            13. `num` (Ordinal): Diagnosis of heart disease (0-4)
+            12. `thal` (Nominal): Results of a thallium stress test
+                - 3: normal
+                - 6: fixed defect
+                - 7: reversable defect
+            13. `num` (Ordinal): Diagnosis of heart disease (angiographic disease status)
+                - 0: *no heart disease*
+                - 1: *stage A* involves risk factors but no structural heart damage
+                - 2: *stage B* includes structural damage without symptoms
+                - 3: *stage C* involves structural damage and the presence of symptoms
+                - 4: *stage D* is end-stage heart failure with severe symptoms that interfere with daily life
             """)
 
     with tab2:
@@ -329,6 +371,8 @@ elif page == "Initial Preprocessing Steps":
         with col2:
             st.subheader("Updated Data Types")
             st.code(artifacts['combine_new_info'].getvalue(), language="text")
+        
+        st.subheader("Updated Dataset Statistical Summary")
         st.dataframe(artifacts['combine_new_describe'], height=318)
 
     with tab2:
@@ -340,22 +384,31 @@ elif page == "Initial Preprocessing Steps":
 
         col1, col2 = st.columns(2)
         with col1:
-            st.subheader("Need to Remove Row at Index 490")
+            st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[0]}")
             df_with_dup[(df_with_dup["age"] == 58.0) & 
                         (df_with_dup["cp"] == 3) & 
                         (df_with_dup["trestbps"] == 150.0)]
         with col2:
-            st.subheader("Need to Remove Row at Index 666")
+            st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[1]}")
             df_with_dup[(df_with_dup["age"] == 49.0) & 
                         (df_with_dup["cp"] == 2) & 
                         (df_with_dup["trestbps"] == 110.0)]
 
     with tab3:
         st.subheader("Location Encoding")
-        buf = io.StringIO()
-        artifacts['location_encode'].to_string(buf=buf)
-        buf.seek(0)
-        st.code(buf.getvalue(), language="text")
+        col1, col2 = st.columns(2)
+        with col1:
+            buf = io.StringIO()
+            artifacts['location_encode'].to_string(buf=buf)
+            buf.seek(0)
+            st.code(buf.getvalue(), language="text")
+        with col2:
+            st.info("""
+            Using the encoding map to the left, we can see that the location column has been encoded with their
+            corresponding values in the dataset view below.
+            """)
+        
+        st.subheader("Dataset After Removing Duplicates and Encoding Location")
         st.dataframe(artifacts['df_no_dup'], height=500)
 
 elif page == "Handling Missing Values":
@@ -368,6 +421,12 @@ elif page == "Handling Missing Values":
         fig, ax = plt.subplots(figsize=(10, 4))
         sns.heatmap(artifacts['df_no_dup'].isna(), cmap="magma")
         st.pyplot(fig)
+
+        st.info("""
+        The heatmap above visualizes the presence of NaN values across all variables, with bright yellow representing
+        missing data and black representing present data. The table below quantifies the count and percentage of
+        missing values for each variable before any imputation methods are applied.""")
+
         st.subheader("Missingness Summary")
         nan_stats = pd.DataFrame(artifacts['df_no_dup'].isna().sum(), columns=["NaN_Count"]) 
         nan_stats["NaN_Percent"] = np.round(nan_stats["NaN_Count"]/artifacts['df_no_dup'].shape[0], 4)*100
@@ -375,29 +434,50 @@ elif page == "Handling Missing Values":
         st.dataframe(nan_stats, height=562)
 
     with tab2:
-        col1, col2 = st.columns(2)
         st.subheader("MICE (Imputation on Continuous Variables)")
+        col1, col2 = st.columns(2)
         with col1:
+            st.subheader("Stats Before MICE")
             st.dataframe(artifacts["summary_before_MICE"])
         with col2:
+            st.subheader("Stats After MICE")
             st.dataframe(artifacts["summary_after_MICE"])
+
+        st.info("""
+        The section above provides a statistical summary of the dataset before and after MICE imputation. The table
+        below quantifies the count and percentage of missing values for each variable after applying MICE
+        imputation.""")
         st.dataframe(artifacts["stats_MICE"], height=562)
     
     with tab3:
-        col1, col2 = st.columns(2)
         st.subheader("KNN (Imputation on Categorical Variables)")
+        col1, col2 = st.columns(2)
         with col1:
+            st.subheader("Stats Before KNN")
             st.dataframe(artifacts["summary_before_KNN"])
         with col2:
+            st.subheader("Stats After KNN")
             st.dataframe(artifacts["summary_after_KNN"])
+        
+        st.info("""
+        The section above provides a statistical summary of the dataset before and after KNN imputation. The table
+        below quantifies the count and percentage of missing values for each variable after applying KNN
+        imputation.""")
         st.dataframe(artifacts["stats_KNN"], height=562)
 
     with tab4:
         st.subheader("Assign Appropriate Data Types")
-        buf = io.StringIO()
-        artifacts['df_clean'].info(buf=buf)
-        buf.seek(0)
-        st.code(buf.getvalue(), language="text")
+        col1, col2 = st.columns(2)
+        with col1:
+            buf = io.StringIO()
+            artifacts['df_clean'].info(buf=buf)
+            buf.seek(0)
+            st.code(buf.getvalue(), language="text")
+        with col2:
+            st.info("""
+            After completing the MICE and KNN imputation steps, we finalize the dataset by assigning appropriate data
+            types; converting all continuous variables to *float64* and all categorical variables to *int64*.
+            """)
         st.dataframe(artifacts['df_clean'], height=500)
 
 elif page == "Imputation Analysis":
