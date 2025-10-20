@@ -344,7 +344,7 @@ elif page == "Initial Preprocessing Steps":
                         (df_with_dup["cp"] == 3) & 
                         (df_with_dup["trestbps"] == 150.0)]
         with col2:
-            st.subheader("Need to Remove Row at Rndex 666")
+            st.subheader("Need to Remove Row at Index 666")
             df_with_dup[(df_with_dup["age"] == 49.0) & 
                         (df_with_dup["cp"] == 2) & 
                         (df_with_dup["trestbps"] == 110.0)]
@@ -483,7 +483,7 @@ elif page == "Interactive Visualizations":
 
     with tab3:
         fig_violin = px.violin(df_clean, x="num", y="oldpeak", box=True, points="all", 
-                               labels={"num":"Heart Disease Stage", "oldpeak":"Oldpeak"}, 
+                               labels={"num":"Heart Disease Stage", "oldpeak":"Blood Flow to Heart"}, 
                                title="Violin Plot of Heart Disease Stage vs Blood Flow to Heart During Physical Exertion (oldpeak)")
         st.plotly_chart(fig_violin, use_container_width=True)
 
