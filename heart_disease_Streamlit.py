@@ -430,16 +430,20 @@ elif page == "Imputation Analysis":
         st.plotly_chart(fig, use_container_width=True)
 
     with tab2:
-        st.subheader("Box Plots (Before vs After MICE and KNN Imputation)")
+        st.subheader("Box Plots (Before vs After MICE Imputation)")
 
         plot_df_before = artifacts['df_no_dup'][["age"] + artifacts['continuous_cols']].melt(var_name="variable", 
                                                                                              value_name="value")
         fig_box_before = px.box(plot_df_before, x="variable", y="value", title="Box Plot Before Imputation")
+        fig_box_before.update_layout(xaxis_title="Continuous Variable", yaxis_title="Value", 
+                                     yaxis=dict(range=[-25, None]))
         st.plotly_chart(fig_box_before, use_container_width=True)
 
         plot_df_after = artifacts['df_clean'][["age"] + artifacts['continuous_cols']].melt(var_name="variable", 
                                                                                            value_name="value")
         fig_box_after = px.box(plot_df_after, x="variable", y="value", title="Box Plot After Imputation")
+        fig_box_after.update_layout(xaxis_title="Continuous Variable", yaxis_title="Value", 
+                                    yaxis=dict(range=[-25, None]))
         st.plotly_chart(fig_box_after, use_container_width=True)
 
 elif page == "Interactive Visualizations":
