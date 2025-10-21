@@ -383,16 +383,27 @@ elif page == "Initial Preprocessing Steps":
         st.dataframe(df_with_dup[dup_mask])
 
         col1, col2 = st.columns(2)
+        col1_no_dup = False
         with col1:
-            st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[0]}")
-            df_with_dup[(df_with_dup["age"] == 58.0) & 
-                        (df_with_dup["cp"] == 3) & 
-                        (df_with_dup["trestbps"] == 150.0)]
+            try:
+                st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[0]}")
+                st.dataframe(df_with_dup[(df_with_dup["age"] == 58.0) & 
+                                         (df_with_dup["cp"] == 3) & 
+                                         (df_with_dup["trestbps"] == 150.0)])
+            except IndexError:
+                st.warning("No Duplicate Rows Found with Current Filters.")
+                col1_no_dup = True
         with col2:
-            st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[1]}")
-            df_with_dup[(df_with_dup["age"] == 49.0) & 
-                        (df_with_dup["cp"] == 2) & 
-                        (df_with_dup["trestbps"] == 110.0)]
+            try:
+                st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[1]}")
+                st.dataframe(df_with_dup[(df_with_dup["age"] == 49.0) & 
+                                         (df_with_dup["cp"] == 2) & 
+                                         (df_with_dup["trestbps"] == 110.0)])
+            except IndexError:
+                if col1_no_dup:
+                    st.warning("No Duplicate Rows Found with Current Filters.")
+                else:
+                    st.warning("Only ONE Duplicate Row Found with Current Filters.")
 
     with tab3:
         st.subheader("Location Encoding")
@@ -425,7 +436,8 @@ elif page == "Handling Missing Values":
         st.info("""
         The heatmap above visualizes the presence of NaN values across all variables, with bright yellow representing
         missing data and black representing present data. The table below quantifies the count and percentage of
-        missing values for each variable before any imputation methods are applied.""")
+        missing values for each variable before any imputation methods are applied.
+        """)
 
         st.subheader("Missingness Summary")
         nan_stats = pd.DataFrame(artifacts['df_no_dup'].isna().sum(), columns=["NaN_Count"]) 
@@ -446,7 +458,11 @@ elif page == "Handling Missing Values":
         st.info("""
         The section above provides a statistical summary of the dataset before and after MICE imputation. The table
         below quantifies the count and percentage of missing values for each variable after applying MICE
-        imputation.""")
+        imputation.
+                
+        As you can see after MICE, the continuous columns (trestbps, chol, thalach, oldpeak) contain no missing values
+        and preserve the distribution of the variables, maintaining stable summary statistics.
+        """)
         st.dataframe(artifacts["stats_MICE"], height=562)
     
     with tab3:
@@ -462,7 +478,11 @@ elif page == "Handling Missing Values":
         st.info("""
         The section above provides a statistical summary of the dataset before and after KNN imputation. The table
         below quantifies the count and percentage of missing values for each variable after applying KNN
-        imputation.""")
+        imputation.
+
+        As you can see after KNN, the categorical columns (fbs, restecg, exang, slope, ca, thal) contain no missing
+        values and preserve the distribution of the variables, maintaining stable summary statistics.
+        """)
         st.dataframe(artifacts["stats_KNN"], height=562)
 
     with tab4:
@@ -498,6 +518,14 @@ elif page == "Imputation Analysis":
         fig.update_layout(title="Correlation Heatmap Before Imputation")
         st.plotly_chart(fig, use_container_width=True)
 
+        st.info("""
+        The after-imputation heatmap preserves the same overall pattern of strong positive (red) and strong negative
+        (blue) pairwise relationships that appear in the before-imputation map, so the relative structure of the
+        correlation matrix is maintained. Key high-correlation pairs remain high and negative pairs remain negative,
+        with only small magnitude changes rather than sign flips, which shows the imputation process filled missing
+        values without creating spurious associations.
+        """)
+
         col_names = list(artifacts['df_clean'].columns)
         corr_matrix_before = np.round(artifacts['df_clean'].corr().values, 2)
         fig = ff.create_annotated_heatmap(
@@ -518,6 +546,13 @@ elif page == "Imputation Analysis":
         fig_box_before.update_layout(xaxis_title="Continuous Variable", yaxis_title="Value", 
                                      yaxis=dict(range=[-25, None]))
         st.plotly_chart(fig_box_before, use_container_width=True)
+
+        st.info("""
+        The box plots for before and after MICE imputation show that the overall distributions (minimum and maximum
+        values, median, and interquartiles) of the continuous variables (age, trestbps, chol, thalach, and oldpeak)
+        remain consistent. This indicates that the imputation process preserved the original data’s statistical
+        properties and variability without introducing bias or distortion.
+        """)
 
         plot_df_after = artifacts['df_clean'][["age"] + artifacts['continuous_cols']].melt(var_name="variable", 
                                                                                            value_name="value")
@@ -559,6 +594,14 @@ elif page == "Interactive Visualizations":
         )
         st.plotly_chart(fig_bar_chart, use_container_width=True)
 
+        st.info("""
+        This grouped bar chart shows the counts of patients at each heart-disease stage (num) separated by dataset
+        source (location). Each cluster on the x-axis corresponds to a disease stage (0–4), and within each cluster
+        separate bars compare how many records from each origin (Cleveland, Long Beach, Hungary, Switzerland) fall into
+        that stage. Cleveland and Hungary datasets show a very high proportion of no heart disease cases, while Long
+        Beach and Switzerland datasets are more evenly distributed across stages.
+        """)
+
     with tab2:
         fig_scatter = px.scatter(df_clean, x="age", y="thalach", color="num", trendline="ols", 
                                  color_continuous_scale="turbo", 
@@ -566,9 +609,25 @@ elif page == "Interactive Visualizations":
                                  title="Scatter Plot of Age vs Maximum Heart Rate (thalach)")
         st.plotly_chart(fig_scatter, use_container_width=True)
 
+        st.info("""
+        This scatter plot displays individual patients' ages on the x-axis versus their maximum heart rate achieved
+        (thalach) on the y-axis, with points colored by heart disease stage (num). An OLS trendline summarizes the
+        overall relationship between age and max heart rate, while the color layering shows how disease stages are
+        distributed across that relationship. You can observe how maximum heart rate tends to decrease with age, and
+        how the clusters of each heart disease stage are non-partitioned.
+        """)
+
     with tab3:
         fig_violin = px.violin(df_clean, x="num", y="oldpeak", box=True, points="all", 
                                labels={"num":"Heart Disease Stage", "oldpeak":"Blood Flow to Heart"}, 
-                               title="Violin Plot of Heart Disease Stage vs Blood Flow to Heart During Physical Exertion (oldpeak)")
+                               title="Violin Plot of Heart Disease Stage vs Blood Flow to Heart " \
+                               "During Physical Exertion (oldpeak)")
         st.plotly_chart(fig_violin, use_container_width=True)
 
+        st.info("""
+        This violin plot shows the distribution of blood flow to heart during physical exertion (oldpeak) across heart
+        disease stages (num), with each violin representing a stage. Hovering over each stage's violin enables the user
+        to view its respective minimum and maximum values, median, and interquartiles. As the heart disease stage increases,
+        the distribution of oldpeak values shifts higher, indicating that patients with more severe heart disease
+        experience greater ST depression during physical exertion (oldpeak).
+        """)
