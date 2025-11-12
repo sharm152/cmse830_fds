@@ -387,22 +387,26 @@ elif page == "Initial Preprocessing Steps":
         with col1:
             try:
                 st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[0]}")
-                st.dataframe(df_with_dup[(df_with_dup["age"] == 58.0) & 
-                                         (df_with_dup["cp"] == 3) & 
-                                         (df_with_dup["trestbps"] == 150.0)])
+                age_0 = df_with_dup[dup_mask].iloc[0, 0]
+                cp_0 = df_with_dup[dup_mask].iloc[0, 2]
+                trestbps_0 = df_with_dup[dup_mask].iloc[0, 3]
+                st.dataframe(df_with_dup[(df_with_dup["age"] == age_0) & 
+                                         (df_with_dup["cp"] == cp_0) & 
+                                         (df_with_dup["trestbps"] == trestbps_0)])
             except IndexError:
                 st.warning("No Duplicate Rows Found with Current Filters.")
                 col1_no_dup = True
         with col2:
             try:
                 st.subheader(f"Need to Remove Row at Index {df_with_dup[dup_mask].index[1]}")
-                st.dataframe(df_with_dup[(df_with_dup["age"] == 49.0) & 
-                                         (df_with_dup["cp"] == 2) & 
-                                         (df_with_dup["trestbps"] == 110.0)])
+                age_1 = df_with_dup[dup_mask].iloc[1, 0]
+                cp_1 = df_with_dup[dup_mask].iloc[1, 2]
+                trestbps_1 = df_with_dup[dup_mask].iloc[1, 3]
+                st.dataframe(df_with_dup[(df_with_dup["age"] == age_1) & 
+                                         (df_with_dup["cp"] == cp_1) & 
+                                         (df_with_dup["trestbps"] == trestbps_1)])
             except IndexError:
-                if col1_no_dup:
-                    st.warning("No Duplicate Rows Found with Current Filters.")
-                else:
+                if col1_no_dup is False:
                     st.warning("Only ONE Duplicate Row Found with Current Filters.")
 
     with tab3:
