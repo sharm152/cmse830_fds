@@ -823,8 +823,6 @@ elif page == "Feature Engineering":
             st.metric(label="PC1-PC10 Cumulative Variance", value=f"{cumulative_variance[9]*100:.2f}%")
         
         st.info("""
-        **Key Observations:**
-        
         - **Kaiser Criterion**: The first 4 principal components have eigenvalues > 1, making them candidates for retention 
           according to the Kaiser criterion.
         - **Elbow Method**: A clear elbow point is observed at PC4, suggesting that including components beyond this point 
@@ -838,9 +836,14 @@ elif page == "Feature Engineering":
 
 elif page == "Classification Models":
     st.header("Classification Models")
+
+    st.info("""
+    ⚠️ **CAUTION: Code (specifically "Model Development") will take 2 to 3 minutes runtime if any parameters below are changed!**
+    """)
     
     st.info("""
-    **Customize your classification models below:**
+    Customize the classification models below:
+            
     - **Number of Principal Components**: Select between 1 and 14 components (default: 4)
     - **Train-Test Split (Test Size)**: Select between 0.01 and 0.99 (default: 0.25 or 25%)
     - **Random State**: Enter any non-negative integer for reproducibility (default: 42)
