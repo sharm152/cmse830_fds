@@ -508,22 +508,13 @@ elif page == "Imputation Analysis":
     st.header("Imputation Analysis")
     tab1, tab2 = st.tabs(["Correlation Comparison", "Outliers Check"])
 
-    # Cached helper function for correlation computations
-    @st.cache_data
-    def compute_correlations():
-        corr_before = np.round(artifacts['df_no_dup'].corr().values, 2)
-        corr_after = np.round(artifacts['df_clean'].corr().values, 2)
-        col_names = list(artifacts['df_clean'].columns)
-        return corr_before, corr_after, col_names
-
     with tab1:
         st.subheader("Correlation Heatmaps (Before vs After MICE and KNN Imputation)")
 
-        with st.spinner("Computing correlations..."):
-            corr_before, corr_after, col_names = compute_correlations()
-        
+        col_names = list(artifacts['df_no_dup'].columns)
+        corr_matrix_before = np.round(artifacts['df_no_dup'].corr().values, 2)
         fig = ff.create_annotated_heatmap(
-            z=corr_before,
+            z=corr_matrix_before,
             x=col_names,
             y=col_names,
             colorscale="bluered"
@@ -539,8 +530,10 @@ elif page == "Imputation Analysis":
         values without creating spurious associations.
         """)
 
+        col_names = list(artifacts['df_clean'].columns)
+        corr_matrix_before = np.round(artifacts['df_clean'].corr().values, 2)
         fig = ff.create_annotated_heatmap(
-            z=corr_after,
+            z=corr_matrix_before,
             x=col_names,
             y=col_names,
             colorscale="bluered"
@@ -615,12 +608,10 @@ elif page == "Interactive Visualizations":
         """)
 
     with tab2:
-        # Removed trendline (expensive computation) for better performance
-        fig_scatter = px.scatter(df_clean, x="age", y="thalach", color="num",
+        fig_scatter = px.scatter(df_clean, x="age", y="thalach", color="num", trendline="ols", 
                                  color_continuous_scale="turbo", 
                                  labels={"age":"Age", "thalach":"Max Heart Rate", "num":"Disease Stage"}, 
-                                 title="Scatter Plot of Age vs Maximum Heart Rate (thalach)",
-                                 hover_data={"age": ":.1f", "thalach": ":.1f"})
+                                 title="Scatter Plot of Age vs Maximum Heart Rate (thalach)")
         st.plotly_chart(fig_scatter)
 
         st.info("""
@@ -632,8 +623,7 @@ elif page == "Interactive Visualizations":
         """)
 
     with tab3:
-        # Use points=False for better performance with large datasets
-        fig_violin = px.violin(df_clean, x="num", y="oldpeak", box=True, points=False,
+        fig_violin = px.violin(df_clean, x="num", y="oldpeak", box=True, points="all", 
                                labels={"num":"Heart Disease Stage", "oldpeak":"Blood Flow to Heart"}, 
                                title="Violin Plot of Heart Disease Stage vs Blood Flow to Heart " \
                                "During Physical Exertion (oldpeak)")
@@ -696,17 +686,13 @@ elif page == "Interactive Visualizations":
         """)
 
     with tab5:
-        # Sample data for parallel coordinates if dataset is large (improves rendering performance)
-        pc_sample_size = min(500, len(df_clean))
-        df_sample = df_clean.sample(n=pc_sample_size, random_state=42) if len(df_clean) > 500 else df_clean
-        
-        fig_parallel = px.parallel_coordinates(df_sample, 
+        fig_parallel = px.parallel_coordinates(df_clean, 
                                        dimensions=["age", "trestbps", "chol", "thalach", "oldpeak"],
                                        color="num",
                                        color_continuous_scale="turbo",
                                        labels={"age":"Age", "trestbps":"Resting BP", "chol":"Cholesterol",
                                                "thalach":"Max Heart Rate", "oldpeak":"Oldpeak", "num":"Disease Stage"},
-                                       title=f"Parallel Coordinates Plot (showing {pc_sample_size} sample records)")
+                                       title="Parallel Coordinates Plot of All Continuous Variables in Dataset")
 
         # Add margins to prevent axis labels from being cut off in Streamlit
         fig_parallel.update_layout(margin=dict(l=25))
@@ -726,19 +712,17 @@ elif page == "Feature Engineering":
     st.header("Feature Engineering")
     tab1, tab2 = st.tabs(["Singular Value Decomposition (SVD) Plots", "Explained Variances & Analysis Summary"])
 
-    # Cached helper function for SVD computation
-    @st.cache_data
-    def compute_svd_fe():
-        X = artifacts['df_clean'].drop(columns=["num"])
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        U, s, Vt = np.linalg.svd(X_scaled, full_matrices=True)
-        eigenvalues = s**2 / (len(X_scaled) - 1)
-        explained_variance_ratio = eigenvalues / eigenvalues.sum()
-        cumulative_variance = np.cumsum(explained_variance_ratio)
-        return s, eigenvalues, explained_variance_ratio, cumulative_variance
-    
-    s, eigenvalues, explained_variance_ratio, cumulative_variance = compute_svd_fe()
+    # Select only predictor variables (exclude 'num' for PCA)
+    X = artifacts['df_clean'].drop(columns=["num"])
+    # Standardize the data using StandardScaler
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    # Perform SVD
+    U, s, Vt = np.linalg.svd(X_scaled, full_matrices=True)
+    # Calculate explained variance ratios
+    eigenvalues = s**2 / (len(X_scaled) - 1)
+    explained_variance_ratio = eigenvalues / eigenvalues.sum()
+    cumulative_variance = np.cumsum(explained_variance_ratio)
     
     with tab1:
         # Create the 2x2 subplot figure
@@ -863,54 +847,24 @@ elif page == "Classification Models":
     with col3:
         random_state = st.number_input("Random State", min_value=0, value=42, step=1) 
     
-    # Cached helper function for SVD computation
-    @st.cache_data
-    def compute_svd_pca():
-        X = artifacts['df_clean'].drop(columns=["num"])
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
-        U, s, Vt = np.linalg.svd(X_scaled, full_matrices=True)
-        eigenvalues = s**2 / (len(X_scaled) - 1)
-        explained_variance_ratio = eigenvalues / eigenvalues.sum()
-        cumulative_variance = np.cumsum(explained_variance_ratio)
-        return X_scaled, Vt, cumulative_variance
-    
-    # Cached helper function for model training
-    @st.cache_data
-    def train_models(X_train, X_test, y_train, y_test, _random_state):
-        # Train Logistic Regression
-        log_reg = LogisticRegression(max_iter=5000, solver='lbfgs', random_state=_random_state)
-        log_reg.fit(X_train, y_train)
-        y_pred_lr = log_reg.predict(X_test)
-        cm_lr = confusion_matrix(y_test, y_pred_lr)
-        
-        # Train Random Forest (reduced estimators)
-        rf = RandomForestClassifier(n_estimators=50, max_depth=10, min_samples_split=5, 
-                                    min_samples_leaf=2, n_jobs=-1, random_state=_random_state)
-        rf.fit(X_train, y_train)
-        y_pred_rf = rf.predict(X_test)
-        cm_rf = confusion_matrix(y_test, y_pred_rf)
-        
-        # Train XGBoost (reduced estimators)
-        xgb = XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.1, 
-                            eval_metric='mlogloss', random_state=_random_state, verbosity=0)
-        xgb.fit(X_train, y_train)
-        y_pred_xgb = xgb.predict(X_test)
-        cm_xgb = confusion_matrix(y_test, y_pred_xgb)
-        
-        return (y_pred_lr, cm_lr), (y_pred_rf, cm_rf), (y_pred_xgb, cm_xgb)
-    
-    # Get cached SVD and PCA
-    X_scaled, Vt, cumulative_variance = compute_svd_pca()
+    # Select only predictor variables (exclude 'num' for PCA)
+    X = artifacts['df_clean'].drop(columns=["num"])
+    # Standardize the data using StandardScaler
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    # Perform SVD
+    U, s, Vt = np.linalg.svd(X_scaled, full_matrices=True)
+    # Calculate explained variance ratios
+    eigenvalues = s**2 / (len(X_scaled) - 1)
+    explained_variance_ratio = eigenvalues / eigenvalues.sum()
+    cumulative_variance = np.cumsum(explained_variance_ratio)
     
     # User-defined principal components to create PCA dataset
     V = Vt[:n_components, :].T
     X_pca = X_scaled @ V
     y = artifacts['df_clean']["num"].copy()
-    
     # User-defined split of data into training and testing sets
-    X_train_pca, X_test_pca, y_train, y_test = train_test_split(X_pca, y, test_size=test_size, 
-                                                                  random_state=int(random_state), stratify=y)
+    X_train_pca, X_test_pca, y_train, y_test = train_test_split(X_pca, y, test_size=test_size, random_state=random_state, stratify=y)
     
     # Create tabs for the three sections
     tab1, tab2, tab3 = st.tabs(["User-defined Parameters", "Development (Confusion Matrices)", "Evaluation (Classification Reports)"])
@@ -937,18 +891,32 @@ elif page == "Classification Models":
     with tab2:
         st.subheader("Model Development")
         
-        # Train all models with caching
-        with st.spinner("Training models..."):
-            (y_pred_lr, cm_lr), (y_pred_rf, cm_rf), (y_pred_xgb, cm_xgb) = train_models(
-                X_train_pca, X_test_pca, y_train, y_test, int(random_state)
-            )
+        # Train Logistic Regression
+        log_reg_pca = LogisticRegression(max_iter=10000, solver='lbfgs', random_state=random_state)
+        log_reg_pca.fit(X_train_pca, y_train)
+        y_pred_pca = log_reg_pca.predict(X_test_pca)
+        cm_pca = confusion_matrix(y_test, y_pred_pca)
+        
+        # Train Random Forest
+        rf_pca = RandomForestClassifier(n_estimators=100, max_depth=15, min_samples_split=5, 
+                                        min_samples_leaf=2, n_jobs=-1, random_state=random_state)
+        rf_pca.fit(X_train_pca, y_train)
+        y_pred_rf = rf_pca.predict(X_test_pca)
+        cm_rf = confusion_matrix(y_test, y_pred_rf)
+        
+        # Train XGBoost
+        xgb_pca = XGBClassifier(n_estimators=200, max_depth=6, learning_rate=0.1, 
+                                eval_metric='mlogloss', random_state=random_state)
+        xgb_pca.fit(X_train_pca, y_train)
+        y_pred_xgb = xgb_pca.predict(X_test_pca)
+        cm_xgb = confusion_matrix(y_test, y_pred_xgb)
         
         # Display confusion matrices in columns
         col1, col2, col3 = st.columns(3)
         
         with col1:
             fig_lr, ax_lr = plt.subplots(figsize=(8, 6))
-            sns.heatmap(cm_lr, annot=True, fmt='d', cmap='Blues', 
+            sns.heatmap(cm_pca, annot=True, fmt='d', cmap='Blues', 
                         xticklabels=np.sort(y.unique()),
                         yticklabels=np.sort(y.unique()),
                         cbar_kws={'label': 'Count'}, ax=ax_lr)
@@ -988,15 +956,10 @@ elif page == "Classification Models":
     with tab3:
         st.subheader("Model Evaluation")
         
-        # Get predictions again (from cache)
-        (y_pred_lr, _), (y_pred_rf, _), (y_pred_xgb, _) = train_models(
-            X_train_pca, X_test_pca, y_train, y_test, int(random_state)
-        )
-        
         # Generate classification reports
-        report_lr = classification_report(y_test, y_pred_lr, zero_division=0.0,
-                                          target_names=[f'Stage {i}' for i in np.sort(y.unique())],
-                                          output_dict=False)
+        report_pca = classification_report(y_test, y_pred_pca, zero_division=0.0,
+                                           target_names=[f'Stage {i}' for i in np.sort(y.unique())],
+                                           output_dict=False)
         report_rf = classification_report(y_test, y_pred_rf, zero_division=0.0,
                                           target_names=[f'Stage {i}' for i in np.sort(y.unique())],
                                           output_dict=False)
@@ -1007,7 +970,7 @@ elif page == "Classification Models":
         # Display reports in columns
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.code(f"Logistic Regression ({n_components} PCs)\n\n{report_lr}", language="text")
+            st.code(f"Logistic Regression ({n_components} PCs)\n\n{report_pca}", language="text")
         with col2:
             st.code(f"Random Forest Classifier ({n_components} PCs)\n\n{report_rf}", language="text")
         with col3:
