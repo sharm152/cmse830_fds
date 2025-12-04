@@ -3,14 +3,19 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.experimental import enable_iterative_imputer
+from sklearn.experimental import enable_iterative_imputer # "IterativeImputer" is Dependent on This
 from sklearn.impute import IterativeImputer, KNNImputer
 from sklearn.preprocessing import RobustScaler, StandardScaler
 import plotly.express as px
 import plotly.figure_factory as ff
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, classification_report
 import io
 
 st.set_page_config(page_title="Heart Disease EDA", layout="wide")
@@ -157,6 +162,8 @@ def load_and_prepare():
         "slope": int, "ca": int, "thal": int, "num": int, "location": int
     })
 
+
+
     return {
         "df_cleveland": df_cleveland,
         "df_long_beach": df_long_beach,
@@ -263,18 +270,8 @@ if isinstance(artifacts, dict):
                 pass
 # End of location-selection addition
 
-
-# st_sidebar_info("This is a text box in the main page — it displays content and messages (not interactive controls). Compare it with the sidebar on the left, which holds filters and navigation.)")
-# st_sidebar_markdown("This text has a :grey-background[grey background].")
-
-
-page = st.sidebar.radio("Select Page", [
-    "Data Background",
-    "Initial Preprocessing Steps",
-    "Handling Missing Values",
-    "Imputation Analysis",
-    "Interactive Visualizations"
-])
+page = st.sidebar.radio("Select Page", ["Data Background", "Initial Preprocessing Steps", "Handling Missing Values",
+                                        "Imputation Analysis", "Interactive Visualizations", "Feature Engineering", "Classification Models"])
 
 if page == "Data Background":
     st.header("Data Background")
@@ -284,16 +281,16 @@ if page == "Data Background":
     with tab1:
         st.subheader("Introduction")
         st.markdown("""
-        This repository contains an exploratory data analysis (EDA) project for heart disease using datasets found from
-        the UCI Machine Learning Repository. The goal is to combine four location-specific datasets (Cleveland, Long
-        Beach, Hungarian, Switzerland), clean and impute missing values (MICE for continuous variables and KNN for
-        categorical variables), and provide visualizations along with interactive exploration via a Streamlit app. With
-        the centralized dataset, the hope is to better understand the different stages of heart disease and how various
-        factors contribute to its progression.
+        This project focuses on the various stages of heart disease as it combines four location-specific datasets (Cleveland, 
+        Long Beach, Hungarian, Switzerland) found from the UCI Machine Learning Repository. Methodolgy involves the **imputation 
+        of missing values using MICE and KNN**, **EDA via interactive visualizations**, **feature engineering through SVD**, and 
+        **developing/evaluating classification models** (Logistic Regression, Random Forest, XGBoost). Specifically for models, 
+        users can experiment with a different numbers of principal components, train-test splits, and random states to observe 
+        real-time effects on model performance.
         
         **To analyze the Heart Disease Stages, our target variable will be `num` (described in-depth below).**
                     
-        Notes Regarding Interactivity:
+        Notes Regarding Interactivity Throughout the Project:
         - You may filter the dataset by `age` using the slider on the left sidebar.
         - You may select (or deselect) the dataset by `location` using the multiselect on the left sidebar.
         """)
@@ -302,42 +299,42 @@ if page == "Data Background":
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("""
-            0. `age` (Ratio): Age in years
-            1. `sex` (Nominal):
+            1. `age` (Ratio): Age in years
+            2. `sex` (Nominal):
                 - 0: female
                 - 1: male
-            2. `cp` (Nominal): Chest pain type
+            3. `cp` (Nominal): Chest pain type
                 - 1: typical angina
                 - 2: atypical angina
                 - 3: non-anginal pain
                 - 4: asymptomatic
-            3. `trestbps` (Ratio): Resting blood pressure (in mm Hg on admission to the hospital)
-            4. `chol` (Ratio): Serum cholestoral in mg/dl
-            5. `fbs` (Nominal): Fasting blood sugar > 120 mg/dl
+            4. `trestbps` (Ratio): Resting blood pressure (in mm Hg on admission to the hospital)
+            5. `chol` (Ratio): Serum cholestoral in mg/dl
+            6. `fbs` (Nominal): Fasting blood sugar > 120 mg/dl
                 - 0: false
                 - 1: true
-            6. `restecg` (Nominal): Resting electrocardiographic results
+            7. `restecg` (Nominal): Resting electrocardiographic results
                 - 0: normal
                 - 1: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)
                 - 2: showing probable or definite left ventricular hypertrophy by Estes' criteria
             """)
         with col2:
             st.markdown("""
-            7. `thalach` (Ratio): Maximum heart rate achieved
-            8. `exang` (Nominal): Exercise induced angina
+            8. `thalach` (Ratio): Maximum heart rate achieved
+            9. `exang` (Nominal): Exercise induced angina
                 - 0: no
                 - 1: yes
-            9. `oldpeak` (Ratio): ST depression induced by exercise relative to rest
-            10. `slope` (Ordinal): Slope of the peak exercise ST segment
+            10. `oldpeak` (Ratio): ST depression induced by exercise relative to rest
+            11. `slope` (Ordinal): Slope of the peak exercise ST segment
                 - 1: upsloping
                 - 2: flat
                 - 3: downsloping
-            11. `ca` (Ratio): Number of major vessels (0-3) colored by fluoroscopy
-            12. `thal` (Nominal): Results of a thallium stress test
+            12. `ca` (Ratio): Number of major vessels (0-3) colored by fluoroscopy
+            13. `thal` (Nominal): Results of a thallium stress test
                 - 3: normal
                 - 6: fixed defect
                 - 7: reversable defect
-            13. `num` (Ordinal): Diagnosis of heart disease (angiographic disease status)
+            14. `num` (Ordinal): Diagnosis of heart disease (angiographic disease status)
                 - 0: *no heart disease*
                 - 1: *stage A* involves risk factors but no structural heart damage
                 - 2: *stage B* includes structural damage without symptoms
@@ -346,6 +343,10 @@ if page == "Data Background":
             """)
 
     with tab2:
+        st.info("""
+        Note: Manually added *location* column to each respective dataset prior to merging.
+        """)
+
         st.subheader("Cleveland")
         st.dataframe(artifacts['df_cleveland'].head(10), height=388)
         st.subheader("Long Beach")
@@ -520,7 +521,7 @@ elif page == "Imputation Analysis":
             colorscale="bluered"
         )
         fig.update_layout(title="Correlation Heatmap Before Imputation")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
         st.info("""
         The after-imputation heatmap preserves the same overall pattern of strong positive (red) and strong negative
@@ -539,7 +540,7 @@ elif page == "Imputation Analysis":
             colorscale="bluered"
         )
         fig.update_layout(title="Correlation Heatmap After Imputation")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
 
     with tab2:
         st.subheader("Box Plots (Before vs After MICE Imputation)")
@@ -549,7 +550,7 @@ elif page == "Imputation Analysis":
         fig_box_before = px.box(plot_df_before, x="variable", y="value", title="Box Plot Before Imputation")
         fig_box_before.update_layout(xaxis_title="Continuous Variable", yaxis_title="Value", 
                                      yaxis=dict(range=[-25, None]))
-        st.plotly_chart(fig_box_before, use_container_width=True)
+        st.plotly_chart(fig_box_before)
 
         st.info("""
         The box plots for before and after MICE imputation show that the overall distributions (minimum and maximum
@@ -563,12 +564,13 @@ elif page == "Imputation Analysis":
         fig_box_after = px.box(plot_df_after, x="variable", y="value", title="Box Plot After Imputation")
         fig_box_after.update_layout(xaxis_title="Continuous Variable", yaxis_title="Value", 
                                     yaxis=dict(range=[-25, None]))
-        st.plotly_chart(fig_box_after, use_container_width=True)
+        st.plotly_chart(fig_box_after)
 
 elif page == "Interactive Visualizations":
     st.header("Interactive Visualizations")
-    tab1, tab2, tab3 = st.tabs(["Heart Disease Stage by Location", "Age vs Maximum Heart Rate (thalach)", 
-                                "Heart Disease Stage vs Blood Flow to Heart (oldpeak)"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Heart Disease Stage by Location", "Age vs Maximum Heart Rate (thalach)", 
+                                            "Heart Disease Stage vs Blood Flow to Heart (oldpeak)",
+                                            "All Categorical Variables", "All Continuous Variables"])
     df_clean = artifacts['df_clean'].copy()
     with tab1:
         location_encode = artifacts['location_encode']
@@ -596,7 +598,7 @@ elif page == "Interactive Visualizations":
             yaxis_title="Count",
             legend_title="Location",
         )
-        st.plotly_chart(fig_bar_chart, use_container_width=True)
+        st.plotly_chart(fig_bar_chart)
 
         st.info("""
         This grouped bar chart shows the counts of patients at each heart-disease stage (num) separated by dataset
@@ -611,7 +613,7 @@ elif page == "Interactive Visualizations":
                                  color_continuous_scale="turbo", 
                                  labels={"age":"Age", "thalach":"Max Heart Rate", "num":"Disease Stage"}, 
                                  title="Scatter Plot of Age vs Maximum Heart Rate (thalach)")
-        st.plotly_chart(fig_scatter, use_container_width=True)
+        st.plotly_chart(fig_scatter)
 
         st.info("""
         This scatter plot displays individual patients' ages on the x-axis versus their maximum heart rate achieved
@@ -626,7 +628,7 @@ elif page == "Interactive Visualizations":
                                labels={"num":"Heart Disease Stage", "oldpeak":"Blood Flow to Heart"}, 
                                title="Violin Plot of Heart Disease Stage vs Blood Flow to Heart " \
                                "During Physical Exertion (oldpeak)")
-        st.plotly_chart(fig_violin, use_container_width=True)
+        st.plotly_chart(fig_violin)
 
         st.info("""
         This violin plot shows the distribution of blood flow to heart during physical exertion (oldpeak) across heart
@@ -635,3 +637,342 @@ elif page == "Interactive Visualizations":
         the distribution of oldpeak values shifts higher, indicating that patients with more severe heart disease
         experience greater ST depression during physical exertion (oldpeak).
         """)
+    
+    with tab4:
+        # Define categorical variables
+        categorical_vars = {"sex": "Gender", "cp": "Chest Pain Type",
+                            "fbs": "Fasting Blood Sugar > 120", "restecg": "Resting ECG Results",
+                            "exang": "Exercise Induced Angina", "slope": "ST Segment Slope",
+                            "ca": "Number of Major Vessels","thal": "Thallium Stress Test Results"}
+
+        # Create subplots with 2 rows and 4 columns
+        fig_categorical = make_subplots(rows=2, cols=4,
+                                        subplot_titles=[f"{k.upper()}<br>{v}" for k, v in categorical_vars.items()],
+                                        specs=[[{"type": "bar"}, {"type": "bar"}, {"type": "bar"}, {"type": "bar"}],
+                                               [{"type": "bar"}, {"type": "bar"}, {"type": "bar"}, {"type": "bar"}]])
+
+        # Color palette
+        colors = px.colors.qualitative.Set2
+        # Add bar charts for each categorical variable
+        col_idx = 1
+        for row_num in [1, 2]:
+            for col_num in [1, 2, 3, 4]:
+                if col_idx <= len(categorical_vars):
+                    var_name = list(categorical_vars.keys())[col_idx - 1]
+                    # Calculate value counts
+                    value_counts = df_clean[var_name].value_counts().sort_index()
+                    # Add trace
+                    fig_categorical.add_trace(go.Bar(x=[f"{x}" for x in value_counts.index], y=value_counts.values,
+                                                     marker_color=colors[(col_idx - 1) % len(colors)], showlegend=False,
+                                                     hovertemplate=f"<b>{var_name.upper()}</b><br>Category: %{{x}}<br>Count: %{{y}}<extra></extra>"),
+                                                     row=row_num, col=col_num)
+                    col_idx += 1
+
+        # Update layout
+        fig_categorical.update_layout(title_text="Distribution of All Categorical Variables in Dataset", height=600)
+
+        # Update y-axis labels
+        fig_categorical.update_yaxes(title_text="Count", row=1, col=1)
+        fig_categorical.update_yaxes(title_text="Count", row=2, col=1)
+
+        st.plotly_chart(fig_categorical)
+
+        st.info("""
+        This multi-panel visualization displays the frequency distribution of all eight categorical variables in the
+        dataset across a 2x4 grid. Each subplot is a bar chart showing the count of patients in each category for
+        variables like gender (sex), chest pain type (cp), fasting blood sugar (fbs), resting ECG results (restecg),
+        exercise-induced angina (exang), ST segment slope (slope), number of major vessels (ca), and thallium stress
+        test results (thal). This provides a comprehensive overview of how patients are distributed across all categorical
+        features, which assists with identifying potential class imbalances.
+        """)
+
+    with tab5:
+        fig_parallel = px.parallel_coordinates(df_clean, 
+                                       dimensions=["age", "trestbps", "chol", "thalach", "oldpeak"],
+                                       color="num",
+                                       color_continuous_scale="turbo",
+                                       labels={"age":"Age", "trestbps":"Resting BP", "chol":"Cholesterol",
+                                               "thalach":"Max Heart Rate", "oldpeak":"Oldpeak", "num":"Disease Stage"},
+                                       title="Parallel Coordinates Plot of All Continuous Variables in Dataset")
+
+        # Add margins to prevent axis labels from being cut off in Streamlit
+        fig_parallel.update_layout(margin=dict(l=25))
+
+        st.plotly_chart(fig_parallel)
+
+        st.info("""
+        This parallel coordinates plot visualizes relationships across five continuous variables (age, resting blood
+        pressure, cholesterol, maximum heart rate, and oldpeak) simultaneously. Each line represents a patient, colored
+        by their heart disease stage (num). You can interact with the plot by dragging axis ranges to filter the data
+        and identify patterns, such as observing which combinations of values are associated with specific disease
+        stages. The color gradient (turbo) makes it easier to track patients as their values change across dimensions,
+        revealing multivariate correlations and clusters within the heart disease progression.
+        """)
+
+elif page == "Feature Engineering":
+    st.header("Feature Engineering")
+    tab1, tab2 = st.tabs(["Singular Value Decomposition (SVD) Plots", "Explained Variances & Analysis Summary"])
+
+    # Select only predictor variables (exclude 'num' for PCA)
+    X = artifacts['df_clean'].drop(columns=["num"])
+    # Standardize the data using StandardScaler
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    # Perform SVD
+    U, s, Vt = np.linalg.svd(X_scaled, full_matrices=True)
+    # Calculate explained variance ratios
+    eigenvalues = s**2 / (len(X_scaled) - 1)
+    explained_variance_ratio = eigenvalues / eigenvalues.sum()
+    cumulative_variance = np.cumsum(explained_variance_ratio)
+    
+    with tab1:
+        # Create the 2x2 subplot figure
+        fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+        
+        # Singular values scree plot
+        axes[0, 0].plot(range(1, len(s)+1), s, 'o-', linewidth=2, markersize=8)
+        axes[0, 0].set_xlabel('Component', fontsize=11)
+        axes[0, 0].set_ylabel('Singular Value', fontsize=11)
+        axes[0, 0].set_title('Scree Plot: Singular Values', fontsize=12, fontweight='bold')
+        axes[0, 0].grid(True, alpha=0.3)
+        axes[0, 0].set_xticks(range(1, len(s)+1))
+        
+        # Eigenvalues scree plot
+        axes[0, 1].plot(range(1, len(eigenvalues)+1), eigenvalues, 'o-', linewidth=2, markersize=8)
+        axes[0, 1].axhline(y=1, color='red', linestyle='--', linewidth=2, label='Kaiser Criterion (λ=1)')
+        axes[0, 1].set_xlabel('Component', fontsize=11)
+        axes[0, 1].set_ylabel('Eigenvalue (λ)', fontsize=11)
+        axes[0, 1].set_title('Scree Plot: Eigenvalues', fontsize=12, fontweight='bold')
+        axes[0, 1].grid(True, alpha=0.3)
+        axes[0, 1].set_xticks(range(1, len(eigenvalues)+1))
+        axes[0, 1].legend()
+        
+        # Individual variance explained
+        axes[1, 0].plot(range(1, len(explained_variance_ratio)+1), explained_variance_ratio, 'o-', 
+                        linewidth=2, markersize=8)
+        axes[1, 0].set_xlabel('Component', fontsize=11)
+        axes[1, 0].set_ylabel('Explained Variance Ratio', fontsize=11)
+        axes[1, 0].set_title('Individual Variance Explained by Component', fontsize=12, fontweight='bold')
+        axes[1, 0].set_ylim(-0.005, max(explained_variance_ratio) * 1.1)
+        axes[1, 0].grid(True, alpha=0.3)
+        axes[1, 0].set_xticks(range(1, len(s)+1))
+        
+        # Cumulative variance plot
+        axes[1, 1].plot(range(1, len(cumulative_variance)+1), cumulative_variance, 'o-', 
+                        linewidth=2, markersize=8, label='Cumulative Variance')
+        axes[1, 1].axhline(y=0.50, color='red', linestyle='--', linewidth=2, label='50% Threshold')
+        axes[1, 1].axhline(y=0.85, color='green', linestyle='--', linewidth=2, label='85% Threshold')
+        axes[1, 1].set_xlabel('Component', fontsize=11)
+        axes[1, 1].set_ylabel('Explained Variance Ratio', fontsize=11)
+        axes[1, 1].set_title('Cumulative Explained Variance', fontsize=12, fontweight='bold')
+        axes[1, 1].set_ylim(-0.005, 1.05)
+        axes[1, 1].grid(True, alpha=0.3)
+        axes[1, 1].set_xticks(range(1, len(s)+1))
+        axes[1, 1].legend(loc='lower right')
+        
+        # plt.tight_layout()
+        st.pyplot(fig)
+        
+        st.info("""
+        These four plots provide a comprehensive view of the SVD and variance explained by each Principal Component (PC):
+        
+        - **Singular Values Scree Plot (top-left)**: Shows the singular values from the SVD decomposition, which declines 
+          as the component index increases, indicating diminishing variance.
+        - **Eigenvalues Scree Plot (top-right)**: Displays eigenvalues with the Kaiser criterion (λ=1) threshold. Components 
+          with eigenvalues > 1 are typically retained.
+        - **Individual Variance Explained (bottom-left)**: Demonstrates the fraction of total variance explained by each 
+          component individually, showing a steep decline after the first few components.
+        - **Cumulative Variance (bottom-right)**: Illustrates how variance accumulates as more components are included, 
+          with reference lines at 50% and 85% thresholds for dimensionality reduction decisions.
+        """)
+    
+    with tab2:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.subheader("Component-wise Explained Variance")
+            # Create a DataFrame for display
+            individual_variance_df = pd.DataFrame({'Component': [f'PC{i+1}' for i in range(len(explained_variance_ratio))],
+                                                   'Individual Variance': [f'{v:.4f}' for v in explained_variance_ratio],
+                                                   'Percentage': [f'{v*100:.2f}%' for v in explained_variance_ratio]})
+            st.dataframe(individual_variance_df, hide_index=True, height=528)
+        with col2:
+            st.subheader("Cumulative Explained Variance")
+            # Create a DataFrame for display
+            cumulative_variance_df = pd.DataFrame({'Components': [f'PC1-PC{i+1}' for i in range(len(cumulative_variance))],
+                                                   'Cumulative Variance': [f'{v:.4f}' for v in cumulative_variance],
+                                                   'Percentage': [f'{v*100:.2f}%' for v in cumulative_variance]})
+            st.dataframe(cumulative_variance_df, hide_index=True, height=528)
+        
+        st.markdown("---")
+
+        st.subheader("Analysis Summary")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric(label="PCs with Eigenvalues (λ) > 1", value=sum(1 for val in eigenvalues if val > 1.0))
+        with col2:
+            st.metric(label="PC1-PC4 Cumulative Variance", value=f"{cumulative_variance[3]*100:.2f}%")
+        with col3:
+            st.metric(label="PC1-PC10 Cumulative Variance", value=f"{cumulative_variance[9]*100:.2f}%")
+        
+        st.info("""
+        **Key Observations:**
+        
+        - **Kaiser Criterion**: The first 4 principal components have eigenvalues > 1, making them candidates for retention 
+          according to the Kaiser criterion.
+        - **Elbow Method**: A clear elbow point is observed at PC4, suggesting that including components beyond this point 
+          provides diminishing returns in terms of explained variance.
+        - **Cumulative Variance**: The first 4 components combined explain more than 50% of the variance in the dataset, and 
+          the first 10 components combined explain more than 85% of the variance in the dataset.
+        - **Conclusion**: Even though 4 principal components only preserve just over half the total variance, 4 PCs is supported 
+          by the Kaiser criterion and the elbow method. Plus, effective dimensionality reduction is achieved as the original 
+          14-dimensional feature space reduces to 4 dimensions.
+        """)
+
+elif page == "Classification Models":
+    st.header("Classification Models")
+    
+    st.info("""
+    **Customize your classification models below:**
+    - **Number of Principal Components**: Select between 1 and 14 components (default: 4)
+    - **Train-Test Split (Test Size)**: Select between 0.01 and 0.99 (default: 0.25 or 25%)
+    - **Random State**: Enter any non-negative integer for reproducibility (default: 42)
+    
+    Adjust these parameters to see how they affect model performance, confusion matrices, and classification reports in real-time.
+    """)
+    # User-controlled inputs for Principal Components, Train-Test Split, and Random State
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        n_components = st.slider("Number of Principal Components", min_value=1, max_value=14, value=4)
+    with col2:
+        test_size = st.slider("Train-Test Split (Test Size)", min_value=0.01, max_value=0.99, value=0.25, step=0.01)
+    with col3:
+        random_state = st.number_input("Random State", min_value=0, value=42, step=1) 
+    
+    # Select only predictor variables (exclude 'num' for PCA)
+    X = artifacts['df_clean'].drop(columns=["num"])
+    # Standardize the data using StandardScaler
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    # Perform SVD
+    U, s, Vt = np.linalg.svd(X_scaled, full_matrices=True)
+    # Calculate explained variance ratios
+    eigenvalues = s**2 / (len(X_scaled) - 1)
+    explained_variance_ratio = eigenvalues / eigenvalues.sum()
+    cumulative_variance = np.cumsum(explained_variance_ratio)
+    
+    # User-defined principal components to create PCA dataset
+    V = Vt[:n_components, :].T
+    X_pca = X_scaled @ V
+    y = artifacts['df_clean']["num"].copy()
+    # User-defined split of data into training and testing sets
+    X_train_pca, X_test_pca, y_train, y_test = train_test_split(X_pca, y, test_size=test_size, random_state=random_state, stratify=y)
+    
+    # Create tabs for the three sections
+    tab1, tab2, tab3 = st.tabs(["User-defined Parameters", "Development (Confusion Matrices)", "Evaluation (Classification Reports)"])
+    
+    with tab1:
+        st.subheader("PCA Configuration")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric(label="Original Dimensions", value=f"{X_scaled.shape[0]} × {X_scaled.shape[1]}")
+        with col2:
+            st.metric(label="Reduced Dimensions", value=f"{X_pca.shape[0]} × {X_pca.shape[1]}")
+        with col3:
+            st.metric(label="Variance Retained", value=f"{cumulative_variance[n_components-1]*100:.2f}%")
+        
+        st.markdown("---")
+        
+        st.subheader("Train-Test Set Details")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="Training Samples", value=f"{X_train_pca.shape[0]}")
+        with col2:
+            st.metric(label="Testing Samples", value=f"{X_test_pca.shape[0]}")
+    
+    with tab2:
+        st.subheader("Model Development")
+        
+        # Train Logistic Regression
+        log_reg_pca = LogisticRegression(max_iter=10000, solver='lbfgs', random_state=random_state)
+        log_reg_pca.fit(X_train_pca, y_train)
+        y_pred_pca = log_reg_pca.predict(X_test_pca)
+        cm_pca = confusion_matrix(y_test, y_pred_pca)
+        
+        # Train Random Forest
+        rf_pca = RandomForestClassifier(n_estimators=100, max_depth=15, min_samples_split=5, 
+                                        min_samples_leaf=2, n_jobs=-1, random_state=random_state)
+        rf_pca.fit(X_train_pca, y_train)
+        y_pred_rf = rf_pca.predict(X_test_pca)
+        cm_rf = confusion_matrix(y_test, y_pred_rf)
+        
+        # Train XGBoost
+        xgb_pca = XGBClassifier(n_estimators=200, max_depth=6, learning_rate=0.1, 
+                                eval_metric='mlogloss', random_state=random_state)
+        xgb_pca.fit(X_train_pca, y_train)
+        y_pred_xgb = xgb_pca.predict(X_test_pca)
+        cm_xgb = confusion_matrix(y_test, y_pred_xgb)
+        
+        # Display confusion matrices in columns
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            fig_lr, ax_lr = plt.subplots(figsize=(8, 6))
+            sns.heatmap(cm_pca, annot=True, fmt='d', cmap='Blues', 
+                        xticklabels=np.sort(y.unique()),
+                        yticklabels=np.sort(y.unique()),
+                        cbar_kws={'label': 'Count'}, ax=ax_lr)
+            ax_lr.set_xlabel('Predicted Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_lr.set_ylabel('True Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_lr.set_title(f"Logistic Regression Confusion Matrix (n_components={n_components})",
+                            fontsize=12, fontweight='bold')
+            plt.tight_layout()
+            st.pyplot(fig_lr)
+        
+        with col2:
+            fig_rf, ax_rf = plt.subplots(figsize=(8, 6))
+            sns.heatmap(cm_rf, annot=True, fmt='d', cmap='Greens', 
+                        xticklabels=np.sort(y.unique()),
+                        yticklabels=np.sort(y.unique()),
+                        cbar_kws={'label': 'Count'}, ax=ax_rf)
+            ax_rf.set_xlabel('Predicted Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_rf.set_ylabel('True Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_rf.set_title(f"Random Forest Classifier Confusion Matrix (n_components={n_components})",
+                            fontsize=12, fontweight='bold')
+            plt.tight_layout()
+            st.pyplot(fig_rf)
+        
+        with col3:
+            fig_xgb, ax_xgb = plt.subplots(figsize=(8, 6))
+            sns.heatmap(cm_xgb, annot=True, fmt='d', cmap='YlOrRd', 
+                        xticklabels=np.sort(y.unique()),
+                        yticklabels=np.sort(y.unique()),
+                        cbar_kws={'label': 'Count'}, ax=ax_xgb)
+            ax_xgb.set_xlabel('Predicted Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_xgb.set_ylabel('True Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_xgb.set_title(f"XGBoost Classifier Confusion Matrix (n_components={n_components})",
+                             fontsize=12, fontweight='bold')
+            plt.tight_layout()
+            st.pyplot(fig_xgb)
+    
+    with tab3:
+        st.subheader("Model Evaluation")
+        
+        # Generate classification reports
+        report_pca = classification_report(y_test, y_pred_pca, zero_division=0.0,
+                                           target_names=[f'Stage {i}' for i in np.sort(y.unique())],
+                                           output_dict=False)
+        report_rf = classification_report(y_test, y_pred_rf, zero_division=0.0,
+                                          target_names=[f'Stage {i}' for i in np.sort(y.unique())],
+                                          output_dict=False)
+        report_xgb = classification_report(y_test, y_pred_xgb, zero_division=0.0,
+                                           target_names=[f'Stage {i}' for i in np.sort(y.unique())],
+                                           output_dict=False)
+        
+        # Display reports in columns
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.code(f"Logistic Regression ({n_components} PCs)\n\n{report_pca}", language="text")
+        with col2:
+            st.code(f"Random Forest Classifier ({n_components} PCs)\n\n{report_rf}", language="text")
+        with col3:
+            st.code(f"XGBoost Classifier ({n_components} PCs)\n\n{report_xgb}", language="text")
