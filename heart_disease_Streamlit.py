@@ -615,12 +615,10 @@ elif page == "Interactive Visualizations":
         """)
 
     with tab2:
-        # Removed trendline (expensive computation) for better performance
-        fig_scatter = px.scatter(df_clean, x="age", y="thalach", color="num",
+        fig_scatter = px.scatter(df_clean, x="age", y="thalach", color="num", trendline="ols", 
                                  color_continuous_scale="turbo", 
                                  labels={"age":"Age", "thalach":"Max Heart Rate", "num":"Disease Stage"}, 
-                                 title="Scatter Plot of Age vs Maximum Heart Rate (thalach)",
-                                 hover_data={"age": ":.1f", "thalach": ":.1f"})
+                                 title="Scatter Plot of Age vs Maximum Heart Rate (thalach)")
         st.plotly_chart(fig_scatter)
 
         st.info("""
@@ -632,8 +630,7 @@ elif page == "Interactive Visualizations":
         """)
 
     with tab3:
-        # Use points=False for better performance with large datasets
-        fig_violin = px.violin(df_clean, x="num", y="oldpeak", box=True, points=False,
+        fig_violin = px.violin(df_clean, x="num", y="oldpeak", box=True, points="all", 
                                labels={"num":"Heart Disease Stage", "oldpeak":"Blood Flow to Heart"}, 
                                title="Violin Plot of Heart Disease Stage vs Blood Flow to Heart " \
                                "During Physical Exertion (oldpeak)")
@@ -696,17 +693,13 @@ elif page == "Interactive Visualizations":
         """)
 
     with tab5:
-        # Sample data for parallel coordinates if dataset is large (improves rendering performance)
-        pc_sample_size = min(500, len(df_clean))
-        df_sample = df_clean.sample(n=pc_sample_size, random_state=42) if len(df_clean) > 500 else df_clean
-        
-        fig_parallel = px.parallel_coordinates(df_sample, 
+        fig_parallel = px.parallel_coordinates(df_clean, 
                                        dimensions=["age", "trestbps", "chol", "thalach", "oldpeak"],
                                        color="num",
                                        color_continuous_scale="turbo",
                                        labels={"age":"Age", "trestbps":"Resting BP", "chol":"Cholesterol",
                                                "thalach":"Max Heart Rate", "oldpeak":"Oldpeak", "num":"Disease Stage"},
-                                       title=f"Parallel Coordinates Plot (showing {pc_sample_size} sample records)")
+                                       title="Parallel Coordinates Plot of All Continuous Variables in Dataset")
 
         # Add margins to prevent axis labels from being cut off in Streamlit
         fig_parallel.update_layout(margin=dict(l=25))
