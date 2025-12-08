@@ -14,6 +14,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, classification_report
 import io
 
@@ -282,9 +283,9 @@ if page == "Data Background":
         This project focuses on the various stages of heart disease as it combines four location-specific datasets (Cleveland, 
         Long Beach, Hungarian, Switzerland) found from the UCI Machine Learning Repository. Methodolgy involves the **imputation 
         of missing values** (MICE and KNN), **EDA via interactive visualizations**, **feature engineering through SVD**, and 
-        **developing/evaluating classification models** (Logistic Regression and Random Forest). Specifically for models, users 
-        can experiment with a different numbers of principal components, train-test splits, and random states to observe real-time 
-        effects on model performance.
+        **developing/evaluating classification models** (Logistic Regression, Random Forest, and XGBoost). Specifically for models, 
+        users can experiment with a different numbers of principal components, train-test splits, and random states to observe 
+        real-time effects on model performance.
         
         **To analyze the Heart Disease Stages, our target variable will be `num` (described in-depth below).**
                     
@@ -841,7 +842,7 @@ elif page == "Classification Models":
     """)
     
     st.info("""
-    Adjust the parameters below to see how they affect the classification models (Logistic Regression and Random Forest) in real-time.
+    Adjust the parameters below to see how they affect the classification models (Logistic Regression, Random Forest, and XGBoost Classifier) in real-time.
             
     - **Number of Principal Components**: Select between 1 and 14 components (default: 4)
     - **Train-Test Split (Test Size)**: Select between 0.01 and 0.99 (default: 0.25 or 25%)
@@ -874,20 +875,36 @@ elif page == "Classification Models":
     
     # Cached helper function for model training
     @st.cache_data
-    def train_models(X_train, X_test, y_train, y_test, _random_state):        
+    def train_models(X_train, X_test, y_train, y_test, _random_state):
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
         # Train Logistic Regression
+        status_text.text("Training Logistic Regression... (1/3)")
         log_reg = LogisticRegression(random_state=_random_state)
         log_reg.fit(X_train, y_train)
         y_pred_lr = log_reg.predict(X_test)
         cm_lr = confusion_matrix(y_test, y_pred_lr)
+        progress_bar.progress(33)
         
         # Train Random Forest
+        status_text.text("Training Random Forest... (2/3)")
         rf = RandomForestClassifier(random_state=_random_state)
         rf.fit(X_train, y_train)
         y_pred_rf = rf.predict(X_test)
         cm_rf = confusion_matrix(y_test, y_pred_rf)
+        progress_bar.progress(66)
         
-        return (y_pred_lr, cm_lr), (y_pred_rf, cm_rf)
+        # Train XGBoost Classifier
+        status_text.text("Training XGBoost Classifier... (3/3)")
+        xgb = XGBClassifier(random_state=_random_state, verbosity=0)
+        xgb.fit(X_train, y_train)
+        y_pred_xgb = xgb.predict(X_test)
+        cm_xgb = confusion_matrix(y_test, y_pred_xgb)
+        progress_bar.progress(100)
+        status_text.text("✅ All models trained successfully!")
+        
+        return (y_pred_lr, cm_lr), (y_pred_rf, cm_rf), (y_pred_xgb, cm_xgb)
     
     # Get cached SVD and PCA
     X_scaled, Vt, cumulative_variance = compute_svd_pca()
@@ -924,10 +941,13 @@ elif page == "Classification Models":
         st.subheader("Model Development")
         
         # Train all models with caching
-        (y_pred_lr, cm_lr), (y_pred_rf, cm_rf) = train_models(X_train_pca, X_test_pca, y_train, y_test, int(random_state))
+        with st.spinner("Training models..."):
+            (y_pred_lr, cm_lr), (y_pred_rf, cm_rf), (y_pred_xgb, cm_xgb) = train_models(
+                X_train_pca, X_test_pca, y_train, y_test, int(random_state)
+            )
         
         # Display confusion matrices in columns
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             fig_lr, ax_lr = plt.subplots(figsize=(8, 6))
@@ -954,12 +974,27 @@ elif page == "Classification Models":
                             fontsize=12, fontweight='bold')
             plt.tight_layout()
             st.pyplot(fig_rf)
+        
+        with col3:
+            fig_xgb, ax_xgb = plt.subplots(figsize=(8, 6))
+            sns.heatmap(cm_xgb, annot=True, fmt='d', cmap='YlOrRd', 
+                        xticklabels=np.sort(y.unique()),
+                        yticklabels=np.sort(y.unique()),
+                        cbar_kws={'label': 'Count'}, ax=ax_xgb)
+            ax_xgb.set_xlabel('Predicted Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_xgb.set_ylabel('True Heart Disease Stage', fontsize=11, fontweight='bold')
+            ax_xgb.set_title(f"XGBoost Classifier Confusion Matrix (n_components={n_components})",
+                             fontsize=12, fontweight='bold')
+            plt.tight_layout()
+            st.pyplot(fig_xgb)
     
     with tab3:
         st.subheader("Model Evaluation")
         
         # Get predictions again (from cache)
-        (y_pred_lr, _), (y_pred_rf, _) = train_models(X_train_pca, X_test_pca, y_train, y_test, int(random_state))
+        (y_pred_lr, _), (y_pred_rf, _), (y_pred_xgb, _) = train_models(
+            X_train_pca, X_test_pca, y_train, y_test, int(random_state)
+        )
         
         # Generate classification reports
         report_lr = classification_report(y_test, y_pred_lr, zero_division=0.0,
@@ -968,10 +1003,15 @@ elif page == "Classification Models":
         report_rf = classification_report(y_test, y_pred_rf, zero_division=0.0,
                                           target_names=[f'Stage {i}' for i in np.sort(y.unique())],
                                           output_dict=False)
+        report_xgb = classification_report(y_test, y_pred_xgb, zero_division=0.0,
+                                           target_names=[f'Stage {i}' for i in np.sort(y.unique())],
+                                           output_dict=False)
         
         # Display reports in columns
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.code(f"Logistic Regression ({n_components} PCs)\n\n{report_lr}", language="text")
         with col2:
             st.code(f"Random Forest Classifier ({n_components} PCs)\n\n{report_rf}", language="text")
+        with col3:
+            st.code(f"XGBoost Classifier ({n_components} PCs)\n\n{report_xgb}", language="text")
