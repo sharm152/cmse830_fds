@@ -838,7 +838,7 @@ elif page == "Classification Models":
     st.header("Classification Models")
 
     st.info("""
-    ⚠️ **CAUTION: Code (specifically "Model Development") will take 2 to 3 minutes runtime if any parameters below are changed!**
+    ⚠️ **CAUTION: XGBoost will cause the code (specifically "Model Development") to take 2 to 3 minutes runtime if any parameters below are changed!**
     """)
     
     st.info("""

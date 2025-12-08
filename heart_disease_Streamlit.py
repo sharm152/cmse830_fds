@@ -835,10 +835,6 @@ elif page == "Feature Engineering":
 
 elif page == "Classification Models":
     st.header("Classification Models")
-
-    st.info("""
-    ⚠️ **CAUTION: Code (specifically "Model Development") will take 2 to 3 minutes runtime if any parameters below are changed!**
-    """)
     
     st.info("""
     Adjust the parameters below to see how they affect the classification models (Logistic Regression and Random Forest) in real-time.
