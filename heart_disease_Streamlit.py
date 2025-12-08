@@ -842,7 +842,7 @@ elif page == "Classification Models":
     """)
     
     st.info("""
-    Adjust the parameters below to see how they affect the classification models in real-time.
+    Adjust the parameters below to see how they affect the classification models (Logistic Regression, Random Forest, XGBoost Classifier) in real-time.
             
     - **Number of Principal Components**: Select between 1 and 14 components (default: 4)
     - **Train-Test Split (Test Size)**: Select between 0.01 and 0.99 (default: 0.25 or 25%)
@@ -876,23 +876,33 @@ elif page == "Classification Models":
     # Cached helper function for model training
     @st.cache_data
     def train_models(X_train, X_test, y_train, y_test, _random_state):
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
         # Train Logistic Regression
+        status_text.text("Training Logistic Regression... (1/3)")
         log_reg = LogisticRegression(random_state=_random_state)
         log_reg.fit(X_train, y_train)
         y_pred_lr = log_reg.predict(X_test)
         cm_lr = confusion_matrix(y_test, y_pred_lr)
+        progress_bar.progress(33)
         
         # Train Random Forest
+        status_text.text("Training Random Forest... (2/3)")
         rf = RandomForestClassifier(random_state=_random_state)
         rf.fit(X_train, y_train)
         y_pred_rf = rf.predict(X_test)
         cm_rf = confusion_matrix(y_test, y_pred_rf)
+        progress_bar.progress(66)
         
         # Train XGBoost Classifier
-        xgb = XGBClassifier(random_state=_random_state)
+        status_text.text("Training XGBoost Classifier... (3/3)")
+        xgb = XGBClassifier(random_state=_random_state, verbosity=0)
         xgb.fit(X_train, y_train)
         y_pred_xgb = xgb.predict(X_test)
         cm_xgb = confusion_matrix(y_test, y_pred_xgb)
+        progress_bar.progress(100)
+        status_text.text("✅ All models trained successfully!")
         
         return (y_pred_lr, cm_lr), (y_pred_rf, cm_rf), (y_pred_xgb, cm_xgb)
     
