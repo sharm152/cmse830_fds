@@ -14,7 +14,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix, accuracy_score, f1_score, classification_report
+from sklearn.metrics import confusion_matrix, classification_report
 import io
 
 st.set_page_config(page_title="Heart Disease EDA", layout="wide")
