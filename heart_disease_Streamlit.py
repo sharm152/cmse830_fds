@@ -842,14 +842,13 @@ elif page == "Classification Models":
     """)
     
     st.info("""
-    Customize the classification models below:
+    Adjust the parameters below to see how they affect the classification models in real-time.
             
     - **Number of Principal Components**: Select between 1 and 14 components (default: 4)
     - **Train-Test Split (Test Size)**: Select between 0.01 and 0.99 (default: 0.25 or 25%)
     - **Random State**: Enter any non-negative integer for reproducibility (default: 42)
-    
-    Adjust these parameters to see how they affect model performance, confusion matrices, and classification reports in real-time.
     """)
+
     # User-controlled inputs for Principal Components, Train-Test Split, and Random State
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -858,6 +857,9 @@ elif page == "Classification Models":
         test_size = st.slider("Train-Test Split (Test Size)", min_value=0.01, max_value=0.99, value=0.25, step=0.01)
     with col3:
         random_state = st.number_input("Random State", min_value=0, value=42, step=1) 
+    
+     # Create tabs for the three sections
+    tab1, tab2, tab3 = st.tabs(["User-defined Parameters", "Development (Confusion Matrices)", "Evaluation (Classification Reports)"])
     
     # Cached helper function for SVD computation
     @st.cache_data
@@ -875,21 +877,19 @@ elif page == "Classification Models":
     @st.cache_data
     def train_models(X_train, X_test, y_train, y_test, _random_state):
         # Train Logistic Regression
-        log_reg = LogisticRegression(max_iter=5000, solver='lbfgs', random_state=_random_state)
+        log_reg = LogisticRegression(random_state=_random_state)
         log_reg.fit(X_train, y_train)
         y_pred_lr = log_reg.predict(X_test)
         cm_lr = confusion_matrix(y_test, y_pred_lr)
         
-        # Train Random Forest (reduced estimators)
-        rf = RandomForestClassifier(n_estimators=50, max_depth=10, min_samples_split=5, 
-                                    min_samples_leaf=2, n_jobs=-1, random_state=_random_state)
+        # Train Random Forest
+        rf = RandomForestClassifier(random_state=_random_state)
         rf.fit(X_train, y_train)
         y_pred_rf = rf.predict(X_test)
         cm_rf = confusion_matrix(y_test, y_pred_rf)
         
-        # Train XGBoost (reduced estimators)
-        xgb = XGBClassifier(n_estimators=100, max_depth=5, learning_rate=0.1, 
-                            eval_metric='mlogloss', random_state=_random_state, verbosity=0)
+        # Train XGBoost Classifier
+        xgb = XGBClassifier(random_state=_random_state)
         xgb.fit(X_train, y_train)
         y_pred_xgb = xgb.predict(X_test)
         cm_xgb = confusion_matrix(y_test, y_pred_xgb)
@@ -906,10 +906,7 @@ elif page == "Classification Models":
     
     # User-defined split of data into training and testing sets
     X_train_pca, X_test_pca, y_train, y_test = train_test_split(X_pca, y, test_size=test_size, 
-                                                                  random_state=int(random_state), stratify=y)
-    
-    # Create tabs for the three sections
-    tab1, tab2, tab3 = st.tabs(["User-defined Parameters", "Development (Confusion Matrices)", "Evaluation (Classification Reports)"])
+                                                                random_state=int(random_state), stratify=y)
     
     with tab1:
         st.subheader("PCA Configuration")
