@@ -359,8 +359,8 @@ if page == "Data Background":
         st.subheader("Entirety of Combined Dataset (Raw Form)")
         st.dataframe(artifacts['df_combine'], height=500)
 
-elif page == "Initial Preprocessing Steps":
-    st.header("Initial Preprocessing Steps")
+elif page == "Initial Data Cleaning":
+    st.header("Initial Data Cleaning")
     tab1, tab2, tab3 = st.tabs(["Dataset Statistics", "Check Duplicates", "Location Encoding"])
 
     with tab1:
@@ -572,8 +572,8 @@ elif page == "Imputation Analysis":
                                     yaxis=dict(range=[-25, None]))
         st.plotly_chart(fig_box_after)
 
-elif page == "Interactive Visualizations":
-    st.header("Interactive Visualizations")
+elif page == "Interactive Visuals (EDA)":
+    st.header("Interactive Visuals (EDA)")
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Heart Disease Stage by Location", "Age vs Maximum Heart Rate (thalach)", 
                                             "Heart Disease Stage vs Blood Flow to Heart (oldpeak)",
                                             "All Categorical Variables", "All Continuous Variables"])
@@ -838,7 +838,7 @@ elif page == "Classification Models":
     st.header("Classification Models")
 
     st.info("""
-    ⚠️ **CAUTION: XGBoost will cause the code (specifically "Model Development") to take 2 to 3 minutes runtime if any parameters below are changed!**
+    ⚠️ **CAUTION: XGBoost Classifier will cause the code (specifically "Model Development") to take 2 to 3 minutes runtime if any parameters below are changed!**
     """)
     
     st.info("""
@@ -988,6 +988,14 @@ elif page == "Classification Models":
             plt.tight_layout()
             st.pyplot(fig_xgb)
     
+        st.info("""
+        - **Stage 0 (No Disease) Performance**: All three classifiers demonstrate strong performance in identifying Stage 0 cases. This 
+          indicates that all three models are effective at distinguishing patients without heart disease.
+        - **Stages 1-4 (Disease Present) Performance**: In contrast, the three models exhibit considerably more difficulty in accurately 
+          classifying the specific stages of heart disease (Stages 1-4). The confusion matrices reveal substantial misclassifications 
+          across these disease stages, with predictions often distributed across multiple adjacent categories.
+        """)
+    
     with tab3:
         st.subheader("Model Evaluation")
         
@@ -1015,3 +1023,18 @@ elif page == "Classification Models":
             st.code(f"Random Forest Classifier ({n_components} PCs)\n\n{report_rf}", language="text")
         with col3:
             st.code(f"XGBoost Classifier ({n_components} PCs)\n\n{report_xgb}", language="text")
+        
+        st.info("""
+        - **Overall Accuracy**: Both models achieve similar overall accuracy scores, indicating that around 50-60% of all predictions 
+          across the five disease stages are correctly classified. This suggests that multi-class classification of heart disease severity 
+          remains a challenging task for both modeling approaches.
+        - **F1-Score Performance**: The F1-scores reveal a consistent pattern across both models, with strong performance on Stage 0 but 
+          substantially weaker performance on disease stages 1-4. Stage 4 performance is particularly concerning, with the lowest F1-scores 
+          by far, indicating that both models struggle significantly with identifying the most severe disease stage.
+        """)
+
+        st.info("""
+        - **Key Takeaway**: Given the confusion matrices and classification reports, these patterns suggest that while both modeling 
+          approaches can reliably detect the presence versus absence of heart disease, they struggle with the more nuanced task of 
+          determining the precise severity stage once disease is present.
+        """)

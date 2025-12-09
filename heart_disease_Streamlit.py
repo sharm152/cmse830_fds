@@ -358,8 +358,8 @@ if page == "Data Background":
         st.subheader("Entirety of Combined Dataset (Raw Form)")
         st.dataframe(artifacts['df_combine'], height=500)
 
-elif page == "Initial Preprocessing Steps":
-    st.header("Initial Preprocessing Steps")
+elif page == "Initial Data Cleaning":
+    st.header("Initial Data Cleaning")
     tab1, tab2, tab3 = st.tabs(["Dataset Statistics", "Check Duplicates", "Location Encoding"])
 
     with tab1:
@@ -571,8 +571,8 @@ elif page == "Imputation Analysis":
                                     yaxis=dict(range=[-25, None]))
         st.plotly_chart(fig_box_after)
 
-elif page == "Interactive Visualizations":
-    st.header("Interactive Visualizations")
+elif page == "Interactive Visuals (EDA)":
+    st.header("Interactive Visuals (EDA)")
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Heart Disease Stage by Location", "Age vs Maximum Heart Rate (thalach)", 
                                             "Heart Disease Stage vs Blood Flow to Heart (oldpeak)",
                                             "All Categorical Variables", "All Continuous Variables"])
@@ -950,7 +950,15 @@ elif page == "Classification Models":
                             fontsize=12, fontweight='bold')
             plt.tight_layout()
             st.pyplot(fig_rf)
-    
+        
+        st.info("""
+        - **Stage 0 (No Disease) Performance**: Both the Logistic Regression and Random Forest classifiers demonstrate strong performance 
+          in identifying Stage 0 cases. This indicates that both models are effective at distinguishing patients without heart disease.
+        - **Stages 1-4 (Disease Present) Performance**: In contrast, both models exhibit considerably more difficulty in accurately 
+          classifying the specific stages of heart disease (Stages 1-4). The confusion matrices reveal substantial misclassifications 
+          across these disease stages, with predictions often distributed across multiple adjacent categories.
+        """)
+
     with tab3:
         st.subheader("Model Evaluation")
         
@@ -971,3 +979,14 @@ elif page == "Classification Models":
             st.code(f"Logistic Regression ({n_components} PCs)\n\n{report_lr}", language="text")
         with col2:
             st.code(f"Random Forest Classifier ({n_components} PCs)\n\n{report_rf}", language="text")
+        
+        st.info("""
+        - **Key Takeaway**: This pattern suggests that while both modeling approaches can reliably detect the presence versus absence of 
+          heart disease, they struggle with the more nuanced task of determining the precise severity stage once disease is present.
+        """)
+
+        st.info("""
+        - **Key Takeaway**: Given the confusion matrices and classification reports, these patterns suggest that while both modeling 
+          approaches can reliably detect the presence versus absence of heart disease, they struggle with the more nuanced task of 
+          determining the precise severity stage once disease is present.
+        """)
