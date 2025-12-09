@@ -269,8 +269,8 @@ if isinstance(artifacts, dict):
                 pass
 # End of location-selection addition
 
-page = st.sidebar.radio("Select Page", ["Data Background", "Initial Preprocessing Steps", "Handling Missing Values",
-                                        "Imputation Analysis", "Interactive Visualizations", "Feature Engineering", "Classification Models"])
+page = st.sidebar.radio("Select Page", ["Data Background", "Initial Data Cleaning", "Handling Missing Values", "Imputation Analysis", 
+                                        "Interactive Visuals (EDA)", "Feature Engineering", "Classification Models"])
 
 if page == "Data Background":
     st.header("Data Background")

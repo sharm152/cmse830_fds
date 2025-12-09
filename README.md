@@ -4,20 +4,60 @@
 
 ## Project Overview
 
-This project performs the following main steps:
+The goal of this project is to analyze various Heart Disease Stages with our target variable being `num` (described in **Data Dictionary** section below). This project performs the following main steps:
 
-1. **Data Loading & Preprocessing**: Load the four location-specific datasets (Cleveland, Long Beach, Hungarian, Switzerland) found from the UCI Machine Learning Repository and concatenate into a combined dataset.
-2. **Handle Missing Values**: Replace dataset-specific missing-value markers (e.g., `?`, `9`, `-9`) with proper NaNs.
-3. **Data Cleaning**: Drop exact duplicates, label-encode the `location` column, and compute missingness statistics.
-4. **Imputation - Continuous Variables**: Impute missing continuous variables (`trestbps`, `chol`, `thalach`, `oldpeak`) using MICE (IterativeImputer) with RobustScaler.
-5. **Imputation - Categorical Variables**: Impute categorical variables (`fbs`, `restecg`, `exang`, `slope`, `ca`, `thal`) using KNNImputer with StandardScaler.
-   . **Exploratory Data Analysis**: Generate interactive visualizations including correlation heatmaps, box plots, grouped bar charts, scatter plots, violin plots, categorical distributions, and parallel coordinates plots.
+1. **Data Loading & Integration**: Load the four location-specific datasets (Cleveland, Long Beach, Hungarian, Switzerland) found from the UCI Machine Learning Repository and concatenate into a combined dataset.
+2. **Initial Data Cleaning**: Replace dataset-specific missing-value markers (e.g., `?`, `9`, `-9`) with proper NaNs, drop exact duplicates, label-encode the `location` column, and compute missingness statistics.
+3. **Imputation - Continuous Variables**: Impute missing continuous variables (`trestbps`, `chol`, `thalach`, `oldpeak`) using MICE (IterativeImputer) with RobustScaler.
+4. **Imputation - Categorical Variables**: Impute categorical variables (`fbs`, `restecg`, `exang`, `slope`, `ca`, `thal`) using KNNImputer with StandardScaler.
+5. **Exploratory Data Analysis**: Generate interactive visualizations including correlation heatmaps, box plots, grouped bar charts, scatter plots, violin plots, categorical distributions, and parallel coordinates plots.
 6. **Feature Engineering**: Apply Singular Value Decomposition (SVD) to reduce the 14-dimensional feature space to a user-defined number of principal components (1-14).
 7. **Classification Modeling**: Train and evaluate two classification models (Logistic Regression and Random Forest) on the PCA-reduced dataset with interactive parameter controls.
 
 ### Performance Optimizations
 
 - **Caching Strategy**: Expensive computations (SVD, correlations, model training) are cached using `@st.cache_data` to enable responsive parameter adjustments.
+
+### Data Dictionary
+
+1. `age` (Ratio): Age in years
+2. `sex` (Nominal):
+    - 0: female
+    - 1: male
+3. `cp` (Nominal): Chest pain type
+    - 1: typical angina
+    - 2: atypical angina
+    - 3: non-anginal pain
+    - 4: asymptomatic
+4. `trestbps` (Ratio): Resting blood pressure (in mm Hg on admission to the hospital)
+5. `chol` (Ratio): Serum cholestoral in mg/dl
+6. `fbs` (Nominal): Fasting blood sugar > 120 mg/dl
+    - 0: false
+    - 1: true
+7. `restecg` (Nominal): Resting electrocardiographic results
+    - 0: normal
+    - 1: having ST-T wave abnormality (T wave inversions and/or ST elevation or depression of > 0.05 mV)
+    - 2: showing probable or definite left ventricular hypertrophy by Estes' criteria
+8. `thalach` (Ratio): Maximum heart rate achieved
+9. `exang` (Nominal): Exercise induced angina
+    - 0: no
+    - 1: yes
+10. `oldpeak` (Ratio): ST depression induced by exercise relative to rest
+11. `slope` (Ordinal): Slope of the peak exercise ST segment
+    - 1: upsloping
+    - 2: flat
+    - 3: downsloping
+12. `ca` (Ratio): Number of major vessels (0-3) colored by fluoroscopy
+13. `thal` (Nominal): Results of a thallium stress test
+    - 3: normal
+    - 6: fixed defect
+    - 7: reversable defect
+14. `num` (Ordinal): Diagnosis of heart disease (angiographic disease status)
+    - 0: *no heart disease*
+    - 1: *stage A* involves risk factors but no structural heart damage
+    - 2: *stage B* includes structural damage without symptoms
+    - 3: *stage C* involves structural damage and the presence of symptoms
+    - 4: *stage D* is end-stage heart failure with severe symptoms that interfere with daily life
 
 ## Repository Contents
 
