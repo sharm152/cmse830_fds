@@ -1025,16 +1025,16 @@ elif page == "Classification Models":
             st.code(f"XGBoost Classifier ({n_components} PCs)\n\n{report_xgb}", language="text")
         
         st.info("""
-        - **Overall Accuracy**: Both models achieve similar overall accuracy scores, indicating that around 50-60% of all predictions 
+        - **Overall Accuracy**: The three models achieve similar overall accuracy scores, indicating that around 50-60% of all predictions 
           across the five disease stages are correctly classified. This suggests that multi-class classification of heart disease severity 
-          remains a challenging task for both modeling approaches.
-        - **F1-Score Performance**: The F1-scores reveal a consistent pattern across both models, with strong performance on Stage 0 but 
-          substantially weaker performance on disease stages 1-4. Stage 4 performance is particularly concerning, with the lowest F1-scores 
-          by far, indicating that both models struggle significantly with identifying the most severe disease stage.
+          remains a challenging task for all three modeling approaches.
+        - **F1-Score Performance**: The F1-scores reveal a consistent pattern across all the models, with strong performance on Stage 0 
+          but substantially weaker performance on disease stages 1-4. Stage 4 performance is particularly concerning, with the lowest 
+          F1-scores by far, indicating that the models struggle significantly with identifying the most severe disease stage.
         """)
 
         st.info("""
-        - **Key Takeaway**: Given the confusion matrices and classification reports, these patterns suggest that while both modeling 
+        - **Key Takeaway**: Given the confusion matrices and classification reports, these patterns suggest that while all three modeling 
           approaches can reliably detect the presence versus absence of heart disease, they struggle with the more nuanced task of 
           determining the precise severity stage once disease is present.
         """)
